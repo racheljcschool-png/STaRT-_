@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학원 출결 관리</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,"Noto Sans KR",sans-serif;
+  background:#f4f7fb;
+  color:#172033;
+}
+button,select{font:inherit}
+.app{display:flex;min-height:100vh}
+
+.sidebar{
+  width:230px;
+  background:#172554;
+  color:white;
+  padding:25px 16px;
+}
+.logo{
+  font-size:21px;
+  font-weight:800;
+  padding:0 12px 30px;
+}
+.menu{
+  padding:13px 15px;
+  border-radius:10px;
+  margin:5px 0;
+  cursor:pointer;
+}
+.menu.active,.menu:hover{background:#2563eb}
+
+.main{flex:1;padding:28px;overflow:auto}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:25px;
+}
+.title{font-size:26px;font-weight:800}
+.subtitle{color:#64748b;margin-top:6px}
+
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+select,.btn{
+  border:1px solid #dbe2ea;
+  background:white;
+  padding:10px 14px;
+  border-radius:9px;
+  cursor:pointer;
+}
+.btn.primary{
+  background:#2563eb;
+  color:white;
+  border-color:#2563eb;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:24px;
+}
+.card{
+  background:white;
+  border-radius:15px;
+  padding:20px;
+  box-shadow:0 2px 10px #00000008;
+}
+.card .label{color:#64748b;font-size:14px}
+.card .number{
+  font-size:28px;
+  font-weight:800;
+  margin-top:8px;
+}
+.green{color:#16a34a}
+.red{color:#dc2626}
+.yellow{color:#d97706}
+.blue{color:#2563eb}
+
+.panel{
+  background:white;
+  border-radius:15px;
+  padding:22px;
+  margin-bottom:24px;
+  box-shadow:0 2px 10px #00000008;
+}
+.panel-title{
+  font-size:18px;
+  font-weight:800;
+  margin-bottom:18px;
+}
+
+.teacher-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+.teacher-tabs button{
+  border:1px solid #dbe2ea;
+  background:white;
+  padding:9px 16px;
+  border-radius:20px;
+  cursor:pointer;
+}
+.teacher-tabs button.active{
+  background:#2563eb;
+  color:white;
+  border-color:#2563eb;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
+th,td{
+  border-bottom:1px solid #edf1f5;
+  padding:13px 10px;
+  text-align:center;
+}
+th{
+  background:#f8fafc;
+  color:#64748b;
+  font-size:13px;
+}
+td:first-child,th:first-child{
+  text-align:left;
+  padding-left:16px;
+}
+.student-name{font-weight:700}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;height:30px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:700;
+}
+.attend{background:#dcfce7;color:#15803d}
+.absent{background:#fee2e2;color:#dc2626}
+.late{background:#fef3c7;color:#b45309}
+.leave{background:#dbeafe;color:#2563eb}
+.empty{background:#f1f5f9;color:#94a3b8}
+
+.rate{
+  font-weight:800;
+  color:#2563eb;
+}
+
+.seats{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;
+}
+.seat{
+  min-height:95px;
+  border:2px solid #dbeafe;
+  background:#eff6ff;
+  border-radius:12px;
+  padding:12px;
+}
+.seat-number{
+  color:#64748b;
+  font-size:12px;
+}
+.seat-name{
+  font-weight:800;
+  margin-top:10px;
+}
+.board{
+  background:#1e293b;
+  color:white;
+  text-align:center;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:18px;
+}
+
+.notice{
+  padding:13px 15px;
+  background:#eff6ff;
+  border-radius:9px;
+  color:#1d4ed8;
+  margin-bottom:15px;
+}
+
+@media(max-width:900px){
+  .sidebar{width:70px}
+  .logo{font-size:0}
+  .logo:after{content:"🏫";font-size:25px}
+  .menu{font-size:0;text-align:center}
+  .menu:before{font-size:20px}
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .seats{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="logo">🏫 출결관리</div>
+
+    <div class="menu active">📊 월간 출석</div>
+    <div class="menu">✅ 오늘 출석</div>
+    <div class="menu">🪑 좌석 관리</div>
+    <div class="menu">👨‍🎓 학생 관리</div>
+    <div class="menu">👩‍🏫 담임 관리</div>
+    <div class="menu">⚙️ 설정</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="top">
+      <div>
+        <div class="title">월간 출석 현황</div>
+        <div class="subtitle">담임별 학생 출석률을 한눈에 확인하세요.</div>
+      </div>
+
+      <div class="controls">
+        <button class="btn">‹</button>
+        <select id="month">
+          <option>2026년 8월</option>
+          <option>2026년 9월</option>
+          <option selected>2026년 10월</option>
+          <option>2026년 11월</option>
+          <option>2026년 12월</option>
+        </select>
+        <button class="btn">›</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="label">전체 학생</div>
+        <div class="number">74명</div>
+      </div>
+
+      <div class="card">
+        <div class="label">전체 출석률</div>
+        <div class="number green">92.8%</div>
+      </div>
+
+      <div class="card">
+        <div class="label">결석</div>
+        <div class="number red">56회</div>
+      </div>
+
+      <div class="card">
+        <div class="label">지각</div>
+        <div class="number yellow">25회</div>
+      </div>
+    </div>
+
+    <section class="panel">
+
+      <div class="panel-title">담임별 월간 출석률</div>
+
+      <div class="teacher-tabs">
+        <button class="active" onclick="showTeacher('전체',this)">전체</button>
+        <button onclick="showTeacher('김○○',this)">김○○</button>
+        <button onclick="showTeacher('이○○',this)">이○○</button>
+        <button onclick="showTeacher('박○○',this)">박○○</button>
+        <button onclick="showTeacher('최○○',this)">최○○</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>담임</th>
+            <th>학생수</th>
+            <th>출석률</th>
+            <th>출석</th>
+            <th>결석</th>
+            <th>지각</th>
+            <th>상세</th>
+          </tr>
+        </thead>
+
+        <tbody id="teacherTable">
+          <tr>
+            <td class="student-name">김○○</td>
+            <td>18명</td>
+            <td class="rate">94.2%</td>
+            <td>339</td>
+            <td class="red">12</td>
+            <td class="yellow">5</td>
+            <td><button class="btn" onclick="showStudents('김○○')">보기</button></td>
+          </tr>
+
+          <tr>
+            <td class="student-name">이○○</td>
+            <td>21명</td>
+            <td class="rate">91.8%</td>
+            <td>347</td>
+            <td class="red">17</td>
+            <td class="yellow">8</td>
+            <td><button class="btn" onclick="showStudents('이○○')">보기</button></td>
+          </tr>
+
+          <tr>
+            <td class="student-name">박○○</td>
+            <td>16명</td>
+            <td class="rate">96.1%</td>
+            <td>307</td>
+            <td class="red">6</td>
+            <td class="yellow">3</td>
+            <td><button class="btn" onclick="showStudents('박○○')">보기</button></td>
+          </tr>
+
+          <tr>
+            <td class="student-name">최○○</td>
+            <td>19명</td>
+            <td class="rate">89.7%</td>
+            <td>316</td>
+            <td class="red">21</td>
+            <td class="yellow">9</td>
+            <td><button class="btn" onclick="showStudents('최○○')">보기</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+
+      <div class="panel-title" id="studentTitle">
+        김○○ 담임 / 2026년 10월
+      </div>
+
+      <div class="notice">
+        🟢 출석　🔴 결석　🟡 지각　🔵 조퇴　⚪ 미체크
+      </div>
+
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>학생</th>
+              <th>1</th>
+              <th>2</th>
+              <th>3</th>
+              <th>4</th>
+              <th>5</th>
+              <th>6</th>
+              <th>7</th>
+              <th>8</th>
+              <th>9</th>
+              <th>10</th>
+              <th>출석률</th>
+            </tr>
+          </thead>
+
+          <tbody id="studentTable"></tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <section class="panel">
+
+      <div class="panel-title">🪑 좌석 배치</div>
+
+      <div class="board">칠판 / TV</div>
+
+      <div class="seats" id="seats"></div>
+
+    </section>
+
+  </main>
+</div>
+
+<script>
+
+const students = [
+  {name:"홍길동",teacher:"김○○",rate:"97%",status:["attend","attend","late","attend","attend","empty","attend","attend","attend","attend"]},
+  {name:"김철수",teacher:"김○○",rate:"90%",status:["attend","absent","attend","attend","attend","empty","attend","late","attend","attend"]},
+  {name:"이영희",teacher:"김○○",rate:"95%",status:["attend","attend","attend","attend","attend","empty","absent","attend","attend","attend"]},
+  {name:"박민수",teacher:"김○○",rate:"85%",status:["late","attend","attend","absent","attend","empty","attend","attend","late","attend"]},
+
+  {name:"최지우",teacher:"이○○",rate:"92%",status:["attend","attend","absent","attend","attend","empty","attend","late","attend","attend"]},
+  {name:"강민수",teacher:"이○○",rate:"89%",status:["attend","absent","attend","attend","attend","empty","absent","attend","attend","attend"]},
+
+  {name:"정유진",teacher:"박○○",rate:"98%",status:["attend","attend","attend","attend","attend","empty","attend","attend","attend","attend"]},
+  {name:"한서준",teacher:"박○○",rate:"94%",status:["attend","attend","late","attend","attend","empty","attend","attend","attend","attend"]},
+
+  {name:"윤서연",teacher:"최○○",rate:"87%",status:["absent","attend","late","attend","attend","empty","absent","attend","late","attend"]},
+  {name:"조현우",teacher:"최○○",rate:"91%",status:["attend","attend","attend","absent","attend","empty","attend","late","attend","attend"]}
+];
+
+const statusText = {
+  attend:"출",
+  absent:"결",
+  late:"지",
+  leave:"조",
+  empty:"-"
+};
+
+function showStudents(teacher){
+
+  document.getElementById("studentTitle").innerText =
+    teacher + " 담임 / 2026년 10월";
+
+  const list = students.filter(s => s.teacher === teacher);
+
+  const tbody = document.getElementById("studentTable");
+
+  tbody.innerHTML = list.map(s => {
+
+    let cells = s.status.map(st =>
+      `<td><span class="badge ${st}">${statusText[st]}</span></td>`
+    ).join("");
+
+    return `
+      <tr>
+        <td class="student-name">${s.name}</td>
+        ${cells}
+        <td class="rate">${s.rate}</td>
+      </tr>
+    `;
+
+  }).join("");
+}
+
+function showTeacher(teacher,button){
+
+  document.querySelectorAll(".teacher-tabs button")
+    .forEach(b => b.classList.remove("active"));
+
+  button.classList.add("active");
+
+  if(teacher === "전체"){
+    document.getElementById("teacherTable").innerHTML = `
+      <tr>
+        <td class="student-name">김○○</td>
+        <td>18명</td><td class="rate">94.2%</td>
+        <td>339</td><td class="red">12</td><td class="yellow">5</td>
+        <td><button class="btn" onclick="showStudents('김○○')">보기</button></td>
+      </tr>
+      <tr>
+        <td class="student-name">이○○</td>
+        <td>21명</td><td class="rate">91.8%</td>
+        <td>347</td><td class="red">17</td><td class="yellow">8</td>
+        <td><button class="btn" onclick="showStudents('이○○')">보기</button></td>
+      </tr>
+      <tr>
+        <td class="student-name">박○○</td>
+        <td>16명</td><td class="rate">96.1%</td>
+        <td>307</td><td class="red">6</td><td class="yellow">3</td>
+        <td><button class="btn" onclick="showStudents('박○○')">보기</button></td>
+      </tr>
+      <tr>
+        <td class="student-name">최○○</td>
+        <td>19명</td><td class="rate">89.7%</td>
+        <td>316</td><td class="red">21</td><td class="yellow">9</td>
+        <td><button class="btn" onclick="showStudents('최○○')">보기</button></td>
+      </tr>
+    `;
+  } else {
+
+    const filtered = students.filter(s => s.teacher === teacher);
+
+    document.getElementById("teacherTable").innerHTML = `
+      <tr>
+        <td class="student-name">${teacher}</td>
+        <td>${filtered.length}명</td>
+        <td class="rate">${filtered.length ? "93.4%" : "0%"}</td>
+        <td>전체</td>
+        <td>-</td>
+        <td>-</td>
+        <td>
+          <button class="btn" onclick="showStudents('${teacher}')">
+            학생 보기
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+const seatStudents = [
+ "홍길동","김철수","이영희","박민수",
+ "최지우","강민수","정유진","한서준",
+ "윤서연","조현우","",""
+];
+
+document.getElementById("seats").innerHTML =
+seatStudents.map((name,i)=>`
+  <div class="seat">
+    <div class="seat-number">좌석 ${String(i+1).padStart(2,"0")}</div>
+    <div class="seat-name">${name || "빈자리"}</div>
+  </div>
+`).join("");
+
+showStudents("김○○");
+
+</script>
+
+</body>
+</html>
